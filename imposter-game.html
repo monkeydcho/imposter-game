@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Imposter - Social Deduction Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .setup-section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: #555;
+            margin: 0;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(30px);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .word-reveal {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .player-number {
+            font-size: 1.5em;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .secret-word {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 30px 0;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .imposter-word {
+            color: #dc3545;
+        }
+
+        .hint-word {
+            font-size: 1.2em;
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .pass-screen {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .pass-screen h2 {
+            font-size: 2em;
+            margin-bottom: 40px;
+        }
+
+        .clue-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .clues-list {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .clue-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .voting-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .player-vote-btn {
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .player-vote-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .player-vote-btn.voted {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .results {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .result-message {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .civilians-win {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .imposter-win {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            position: absolute;
+            animation: confetti-fall 3s linear;
+        }
+
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .info-text {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Setup Screen -->
+        <div id="setup-screen">
+            <h1>🎭 The Imposter</h1>
+            
+            <div class="setup-section">
+                <label for="player-count">Number of Players (3-15)</label>
+                <input type="number" id="player-count" min="3" max="15" value="5">
+            </div>
+
+            <div class="setup-section">
+                <label for="category">Category</label>
+                <select id="category">
+                    <option value="movies">🎬 Movies</option>
+                    <option value="food">🍕 Food</option>
+                    <option value="jobs">💼 Jobs</option>
+                    <option value="animals">🦁 Animals</option>
+                    <option value="sports">⚽ Sports</option>
+                    <option value="countries">🌍 Countries</option>
+                    <option value="brands">🏷️ Brands</option>
+                    <option value="celebrities">⭐ Celebrities</option>
+                    <option value="technology">💻 Technology</option>
+                    <option value="hobbies">🎨 Hobbies</option>
+                </select>
+            </div>
+
+            <div class="setup-section">
+                <div class="toggle-container">
+                    <span class="toggle-label">Give Imposter a Starter Word</span>
+                    <div class="toggle-switch" id="hint-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="startGame()">Start Game</button>
+        </div>
+
+        <!-- Pass Device Screen -->
+        <div id="pass-screen" class="hidden">
+            <div class="pass-screen">
+                <h2>Pass to Player <span id="current-player-num"></span></h2>
+                <p style="color: #6c757d; font-size: 1.2em; margin: 20px 0;">Make sure only they can see the screen!</p>
+                <button class="btn" onclick="revealWord()">Tap to See Your Word</button>
+            </div>
+        </div>
+
+        <!-- Word Reveal Screen -->
+        <div id="word-screen" class="hidden">
+            <div class="word-reveal">
+                <p class="player-number">Player <span id="reveal-player-num"></span></p>
+                <div class="secret-word" id="secret-word-display"></div>
+                <p class="hint-word" id="hint-display"></p>
+                <button class="btn" onclick="nextPlayer()">Next Player</button>
+            </div>
+        </div>
+
+        <!-- Clue Giving Screen -->
+        <div id="clue-screen" class="hidden">
+            <h2>Give Your Clues</h2>
+            <p class="player-number">Player <span id="clue-player-num"></span>'s Turn</p>
+            <input type="text" class="clue-input" id="clue-input" placeholder="Enter one-word clue..." maxlength="30">
+            <button class="btn" onclick="submitClue()">Submit Clue</button>
+            <div class="clues-list" id="clues-list"></div>
+        </div>
+
+        <!-- Voting Screen -->
+        <div id="voting-screen" class="hidden">
+            <h2>Who is the Imposter?</h2>
+            <p class="info-text">Discuss and vote!</p>
+            <div class="voting-grid" id="voting-grid"></div>
+            <button class="btn" onclick="tallyVotes()">Reveal Results</button>
+        </div>
+
+        <!-- Imposter Guess Screen -->
+        <div id="guess-screen" class="hidden">
+            <h2>Imposter's Last Chance!</h2>
+            <p style="text-align: center; color: #6c757d; margin: 20px 0;">The Imposter survived! Can they guess the secret word?</p>
+            <input type="text" class="clue-input" id="imposter-guess" placeholder="Enter your guess...">
+            <button class="btn" onclick="checkImposterGuess()">Submit Guess</button>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden">
+            <div class="results">
+                <h2>Game Over!</h2>
+                <div class="result-message" id="result-message"></div>
+                <p id="reveal-info" style="font-size: 1.2em; margin: 20px 0;"></p>
+                <button class="btn" onclick="resetGame()">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game data
+        const wordDatabase = {
+            movies: ['Titanic', 'Avatar', 'Inception', 'Jaws', 'Frozen', 'Shrek', 'Gladiator', 'Casablanca', 'Rocky', 'Alien', 'Psycho', 'Batman', 'Superman', 'Jumanji', 'Madagascar', 'Finding Nemo', 'Toy Story', 'Matrix', 'Joker', 'Aladdin'],
+            food: ['Pizza', 'Burger', 'Sushi', 'Pasta', 'Tacos', 'Sandwich', 'Salad', 'Steak', 'Chicken', 'Lobster', 'Donut', 'Cookie', 'Cake', 'Pancake', 'Waffle', 'Noodles', 'Rice', 'Bread', 'Cheese', 'Chocolate'],
+            jobs: ['Doctor', 'Teacher', 'Chef', 'Engineer', 'Lawyer', 'Nurse', 'Pilot', 'Scientist', 'Artist', 'Musician', 'Writer', 'Actor', 'Dentist', 'Plumber', 'Electrician', 'Mechanic', 'Architect', 'Photographer', 'Veterinarian', 'Firefighter'],
+            animals: ['Lion', 'Elephant', 'Giraffe', 'Penguin', 'Dolphin', 'Tiger', 'Bear', 'Monkey', 'Zebra', 'Kangaroo', 'Panda', 'Koala', 'Whale', 'Shark', 'Eagle', 'Owl', 'Butterfly', 'Octopus', 'Turtle', 'Crocodile'],
+            sports: ['Soccer', 'Basketball', 'Tennis', 'Baseball', 'Football', 'Swimming', 'Golf', 'Volleyball', 'Hockey', 'Boxing', 'Skiing', 'Surfing', 'Cycling', 'Running', 'Wrestling', 'Gymnastics', 'Archery', 'Bowling', 'Cricket', 'Rugby'],
+            countries: ['France', 'Japan', 'Brazil', 'Egypt', 'Australia', 'Canada', 'Italy', 'Spain', 'Mexico', 'China', 'India', 'Germany', 'Russia', 'Greece', 'Thailand', 'Turkey', 'Argentina', 'Sweden', 'Norway', 'Ireland'],
+            brands: ['Nike', 'Apple', 'Google', 'Amazon', 'Disney', 'McDonald', 'Coca-Cola', 'Samsung', 'Toyota', 'Adidas', 'Starbucks', 'Tesla', 'Netflix', 'Spotify', 'Instagram', 'Microsoft', 'Sony', 'Pepsi', 'Ferrari', 'Gucci'],
+            celebrities: ['Beyonce', 'Taylor Swift', 'Rihanna', 'Drake', 'Ronaldo', 'Messi', 'LeBron', 'Oprah', 'Elvis', 'Madonna', 'Einstein', 'Shakespeare', 'Picasso', 'Mozart', 'Lincoln', 'Gandhi', 'Cleopatra', 'Newton', 'Columbus', 'Napoleon'],
+            technology: ['Smartphone', 'Laptop', 'Internet', 'Robot', 'Satellite', 'Drone', 'Bluetooth', 'WiFi', 'Camera', 'Television', 'Radio', 'Microwave', 'Tablet', 'Headphones', 'Keyboard', 'Mouse', 'Printer', 'Monitor', 'Speaker', 'Charger'],
+            hobbies: ['Reading', 'Painting', 'Gaming', 'Cooking', 'Dancing', 'Singing', 'Photography', 'Gardening', 'Fishing', 'Hiking', 'Camping', 'Knitting', 'Drawing', 'Writing', 'Traveling', 'Collecting', 'Yoga', 'Meditation', 'Puzzles', 'Chess']
+        };
+
+        let gameState = {
+            playerCount: 5,
+            category: 'movies',
+            giveHint: false,
+            secretWord: '',
+            hintWord: '',
+            imposterIndex: 0,
+            currentPlayer: 0,
+            clues: [],
+            votes: {},
+            phase: 'setup'
+        };
+
+        // Toggle hint
+        document.getElementById('hint-toggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+            gameState.giveHint = this.classList.contains('active');
+        });
+
+        function startGame() {
+            const playerCount = parseInt(document.getElementById('player-count').value);
+            const category = document.getElementById('category').value;
+
+            if (playerCount < 3 || playerCount > 15) {
+                alert('Please enter a number between 3 and 15');
+                return;
+            }
+
+            gameState.playerCount = playerCount;
+            gameState.category = category;
+            gameState.imposterIndex = Math.floor(Math.random() * playerCount);
+            gameState.currentPlayer = 0;
+            gameState.clues = [];
+            gameState.votes = {};
+
+            // Pick random word
+            const words = wordDatabase[category];
+            gameState.secretWord = words[Math.floor(Math.random() * words.length)];
+
+            // Pick hint word if enabled
+            if (gameState.giveHint) {
+                const hintWords = words.filter(w => w !== gameState.secretWord);
+                gameState.hintWord = hintWords[Math.floor(Math.random() * hintWords.length)];
+            }
+
+            showScreen('pass-screen');
+            document.getElementById('current-player-num').textContent = gameState.currentPlayer + 1;
+        }
+
+        function revealWord() {
+            const isImposter = gameState.currentPlayer === gameState.imposterIndex;
+            const wordDisplay = document.getElementById('secret-word-display');
+            const hintDisplay = document.getElementById('hint-display');
+
+            document.getElementById('reveal-player-num').textContent = gameState.currentPlayer + 1;
+
+            if (isImposter) {
+                wordDisplay.textContent = '🎭 YOU ARE THE IMPOSTER';
+                wordDisplay.classList.add('imposter-word');
+                
+                if (gameState.giveHint) {
+                    hintDisplay.textContent = `Hint: ${gameState.hintWord}`;
+                    hintDisplay.style.display = 'block';
+                } else {
+                    hintDisplay.style.display = 'none';
+                }
+            } else {
+                wordDisplay.textContent = gameState.secretWord;
+                wordDisplay.classList.remove('imposter-word');
+                hintDisplay.style.display = 'none';
+            }
+
+            showScreen('word-screen');
+        }
+
+        function nextPlayer() {
+            gameState.currentPlayer++;
+
+            if (gameState.currentPlayer < gameState.playerCount) {
+                document.getElementById('current-player-num').textContent = gameState.currentPlayer + 1;
+                showScreen('pass-screen');
+            } else {
+                startCluePhase();
+            }
+        }
+
+        function startCluePhase() {
+            gameState.currentPlayer = 0;
+            gameState.clues = [];
+            document.getElementById('clue-player-num').textContent = '1';
+            document.getElementById('clues-list').innerHTML = '';
+            document.getElementById('clue-input').value = '';
+            showScreen('clue-screen');
+        }
+
+        function submitClue() {
+            const clueInput = document.getElementById('clue-input');
+            const clue = clueInput.value.trim();
+
+            if (!clue) {
+                alert('Please enter a clue!');
+                return;
+            }
+
+            gameState.clues.push({
+                player: gameState.currentPlayer + 1,
+                clue: clue
+            });
+
+            displayClues();
+            clueInput.value = '';
+            gameState.currentPlayer++;
+
+            if (gameState.currentPlayer < gameState.playerCount) {
+                document.getElementById('clue-player-num').textContent = gameState.currentPlayer + 1;
+            } else {
+                startVoting();
+            }
+        }
+
+        function displayClues() {
+            const cluesList = document.getElementById('clues-list');
+            cluesList.innerHTML = gameState.clues.map(c => 
+                `<div class="clue-item"><strong>Player ${c.player}:</strong> ${c.clue}</div>`
+            ).join('');
+        }
+
+        function startVoting() {
+            const votingGrid = document.getElementById('voting-grid');
+            votingGrid.innerHTML = '';
+
+            for (let i = 0; i < gameState.playerCount; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'player-vote-btn';
+                btn.textContent = `Player ${i + 1}`;
+                btn.onclick = () => voteForPlayer(i, btn);
+                votingGrid.appendChild(btn);
+            }
+
+            gameState.votes = {};
+            showScreen('voting-screen');
+        }
+
+        function voteForPlayer(playerIndex, btn) {
+            // Simple voting - just track clicks
+            if (!gameState.votes[playerIndex]) {
+                gameState.votes[playerIndex] = 0;
+            }
+            gameState.votes[playerIndex]++;
+            btn.classList.add('voted');
+        }
+
+        function tallyVotes() {
+            // Find player with most votes
+            let maxVotes = 0;
+            let votedPlayer = -1;
+
+            for (let player in gameState.votes) {
+                if (gameState.votes[player] > maxVotes) {
+                    maxVotes = gameState.votes[player];
+                    votedPlayer = parseInt(player);
+                }
+            }
+
+            if (votedPlayer === -1) {
+                alert('Please vote for someone!');
+                return;
+            }
+
+            if (votedPlayer === gameState.imposterIndex) {
+                // Civilians win
+                showResults(true, false);
+            } else {
+                // Imposter gets a chance to guess
+                showScreen('guess-screen');
+            }
+        }
+
+        function checkImposterGuess() {
+            const guess = document.getElementById('imposter-guess').value.trim().toLowerCase();
+            const secretWord = gameState.secretWord.toLowerCase();
+
+            if (guess === secretWord) {
+                showResults(false, true);
+            } else {
+                showResults(true, false);
+            }
+        }
+
+        function showResults(civiliansWin, imposterGuessedCorrectly) {
+            const resultMessage = document.getElementById('result-message');
+            const revealInfo = document.getElementById('reveal-info');
+
+            if (civiliansWin) {
+                if (imposterGuessedCorrectly) {
+                    resultMessage.textContent = '🎭 Imposter Wins!';
+                    resultMessage.className = 'result-message imposter-win';
+                    revealInfo.textContent = `The Imposter (Player ${gameState.imposterIndex + 1}) guessed the word correctly: ${gameState.secretWord}`;
+                } else {
+                    resultMessage.textContent = '👥 Civilians Win!';
+                    resultMessage.className = 'result-message civilians-win';
+                    revealInfo.textContent = `The Imposter was Player ${gameState.imposterIndex + 1}. The secret word was: ${gameState.secretWord}`;
+                    createConfetti();
+                }
+            } else {
+                resultMessage.textContent = '🎭 Imposter Wins!';
+                resultMessage.className = 'result-message imposter-win';
+                revealInfo.textContent = `The Imposter (Player ${gameState.imposterIndex + 1}) survived! The secret word was: ${gameState.secretWord}`;
+            }
+
+            showScreen('results-screen');
+        }
+
+        function createConfetti() {
+            const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe'];
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 30);
+            }
+        }
+
+        function resetGame() {
+            showScreen('setup-screen');
+        }
+
+        function showScreen(screenId) {
+            const screens = ['setup-screen', 'pass-screen', 'word-screen', 'clue-screen', 'voting-screen', 'guess-screen', 'results-screen'];
+            screens.forEach(screen => {
+                document.getElementById(screen).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
